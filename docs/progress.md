@@ -1,6 +1,6 @@
 # GidTerm Development Progress
 
-Last updated: 2026-01-31
+Last updated: 2026-01-31 01:30 EST
 
 ## ✅ Phase 1: Foundation (COMPLETED)
 
@@ -79,39 +79,48 @@ $ cargo run
 [INFO] Loaded 17 nodes, 16 tasks
 ```
 
-## 🎯 Next: Phase 2 - Semantic Layer
+## ✅ Phase 2: Semantic Layer (IN PROGRESS - 75% Complete)
 
-### Priority Queue (in order)
+### Completed Components
 
-#### 1. **parser_registry** (Next Up)
-- Build plugin-style parser registry
-- Register parsers by task type
-- **Depends on**: basic_tui (✓)
-- **Component**: ParserRegistry
-- **Estimated**: 6 hours
+#### 6. **ParserRegistry** ✓
+- [x] OutputParser trait definition
+- [x] Parser registration system
+- [x] Task type mapping
+- [x] Auto-detection fallback
+- **Status**: Active
+- **Location**: `src/semantic/registry.rs`
+- **Completed**: 2026-01-31
 
-#### 2. **regex_parser**
-- Implement regex-based output parsing
-- Progress bar detection
-- Percentage extraction
-- **Depends on**: parser_registry
-- **Component**: RegexParser
-- **Estimated**: 8 hours
+#### 7. **RegexParser** ✓
+- [x] Generic regex-based parsing
+- [x] Progress extraction (45/100, 45%, progress bars)
+- [x] Custom metric patterns
+- [x] Phase detection
+- [x] Error detection
+- **Status**: Active
+- **Location**: `src/semantic/parsers/regex.rs`
+- **Completed**: 2026-01-31
 
-#### 3. **semantic_commands**
+#### 8. **MLTrainingParser** ✓
+- [x] Epoch progress parsing
+- [x] Loss/Accuracy extraction
+- [x] Learning rate detection
+- [x] Phase detection (Training/Validation/Testing)
+- [x] Error detection (NaN, CUDA OOM)
+- **Status**: Active
+- **Location**: `src/semantic/parsers/ml_training.rs`
+- **Completed**: 2026-01-31
+
+### Remaining Tasks
+
+#### **semantic_commands** (Next Up)
 - Template-based command system
 - Variable substitution
 - Command execution
-- **Depends on**: parser_registry
+- **Depends on**: parser_registry (✓)
 - **Component**: SemanticCommands
 - **Estimated**: 8 hours
-
-#### 4. **ml_training_parser**
-- Parse epoch/loss/accuracy
-- Progress calculation
-- **Depends on**: regex_parser
-- **Component**: MLTrainingParser
-- **Estimated**: 6 hours
 
 ## 🛠️ Technical Debt
 
@@ -129,40 +138,34 @@ $ cargo run
 ## 📈 Metrics
 
 ### Time Spent
-- Setup: ~2 hours
-- Graph Parser: ~4 hours
-- PTY Manager: ~6 hours
-- Scheduler: ~3 hours
-- TUI/Dashboard: ~4 hours
-- **Total**: ~19 hours
+- Phase 1 (Core): ~19 hours
+- Phase 2 (Semantic):
+  - ParserRegistry: ~3 hours
+  - RegexParser: ~4 hours
+  - MLTrainingParser: ~3 hours
+- **Total**: ~29 hours
 
 ### Completion Rate
 - **Phase 1**: 100% (5/5 tasks done)
-- **Overall**: 31% (5/16 tasks done)
+- **Phase 2**: 75% (3/4 tasks done)
+- **Overall**: 50% (8/16 tasks done)
 
 ## 🚀 Immediate Next Steps
 
-1. **Start parser_registry implementation**
-   - Design trait `OutputParser`
-   - Implement `ParserRegistry` struct
-   - Add registration methods
+1. **Complete semantic_commands** (Last Phase 2 task)
+   - Template system for semantic commands
+   - Variable substitution
+   - Integration with PTYManager
+   
+2. **Integration testing**
+   - Connect Scheduler + PTYManager + ParserRegistry
+   - Test real task execution with output parsing
+   - Update dashboard with parsed progress
 
-2. **Create semantic module structure**
-   ```
-   src/semantic/
-   ├── mod.rs
-   ├── registry.rs    ← Start here
-   ├── commands.rs
-   └── parsers/
-       ├── regex.rs
-       ├── ml_training.rs
-       └── build.rs
-   ```
-
-3. **Test end-to-end flow**
-   - Run a simple command
-   - Parse output
-   - Update progress
+3. **Phase 3 Planning**
+   - Advanced UI views (graph view, terminal view)
+   - Real-time progress tracking
+   - ETA calculation
 
 ## 🎊 Milestones
 

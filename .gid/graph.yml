@@ -63,7 +63,7 @@ nodes:
     type: Component
     description: Register and manage output parsers
     layer: semantic
-    status: planned
+    status: active
     priority: high
     depends_on: [SemanticLayer]
     path: src/semantic/registry.rs
@@ -72,7 +72,7 @@ nodes:
     type: Component
     description: Regex-based progress extraction
     layer: semantic
-    status: planned
+    status: active
     priority: high
     depends_on: [ParserRegistry]
     path: src/semantic/parsers/regex.rs
@@ -81,7 +81,7 @@ nodes:
     type: Component
     description: Parse ML training output (epoch, loss, accuracy)
     layer: semantic
-    status: planned
+    status: active
     priority: medium
     depends_on: [RegexParser]
     path: src/semantic/parsers/ml_training.rs
@@ -237,31 +237,34 @@ tasks:
     type: Development
     description: Build parser registry system
     priority: high
-    status: pending
+    status: done
     estimated_hours: 6
     depends_on: [basic_tui]
     component: ParserRegistry
     tags: [semantic, phase2]
+    completed_at: 2026-01-31
     
   regex_parser:
     type: Development
     description: Implement regex-based parser
     priority: high
-    status: pending
+    status: done
     estimated_hours: 8
     depends_on: [parser_registry]
     component: RegexParser
     tags: [semantic, phase2]
+    completed_at: 2026-01-31
     
   ml_training_parser:
     type: Development
     description: Parser for ML training output
     priority: medium
-    status: pending
+    status: done
     estimated_hours: 6
     depends_on: [regex_parser]
     component: MLTrainingParser
     tags: [semantic, phase2]
+    completed_at: 2026-01-31
     
   semantic_commands:
     type: Development
