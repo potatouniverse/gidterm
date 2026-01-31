@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "gid": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gid"],
+      "cwd": "."
+    }
+  }
+}

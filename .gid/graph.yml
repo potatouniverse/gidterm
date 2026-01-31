@@ -1,0 +1,376 @@
+# GidTerm Project Graph
+# Auto-generated and maintained by gid MCP tool
+# Last updated: 2026-01-31
+
+metadata:
+  project: gidterm
+  version: 0.1.0
+  description: Graph-Driven Semantic Terminal Controller
+  repository: https://github.com/tonitangpotato/gidterm
+  
+# ============================================================
+# PROJECT GRAPH - Architecture and Components
+# ============================================================
+
+nodes:
+  # === Core Components ===
+  
+  Core:
+    type: Module
+    description: Core engine library - can be integrated into other apps
+    layer: core
+    status: planned
+    priority: critical
+    
+  GraphParser:
+    type: Component
+    description: Parse .gid/graph.yml and build task DAG
+    layer: core
+    status: planned
+    priority: critical
+    depends_on: [Core]
+    path: src/core/graph.rs
+    
+  PTYManager:
+    type: Component
+    description: PTY creation, I/O handling, signal control
+    layer: core
+    status: planned
+    priority: critical
+    depends_on: [Core]
+    path: src/core/pty.rs
+    
+  Scheduler:
+    type: Component
+    description: Task dependency scheduling and execution
+    layer: core
+    status: planned
+    priority: critical
+    depends_on: [GraphParser]
+    path: src/core/scheduler.rs
+    
+  # === Semantic Layer ===
+  
+  SemanticLayer:
+    type: Module
+    description: Semantic understanding of tasks
+    layer: semantic
+    status: planned
+    priority: high
+    depends_on: [Core]
+    
+  ParserRegistry:
+    type: Component
+    description: Register and manage output parsers
+    layer: semantic
+    status: planned
+    priority: high
+    depends_on: [SemanticLayer]
+    path: src/semantic/registry.rs
+    
+  RegexParser:
+    type: Component
+    description: Regex-based progress extraction
+    layer: semantic
+    status: planned
+    priority: high
+    depends_on: [ParserRegistry]
+    path: src/semantic/parsers/regex.rs
+    
+  MLTrainingParser:
+    type: Component
+    description: Parse ML training output (epoch, loss, accuracy)
+    layer: semantic
+    status: planned
+    priority: medium
+    depends_on: [RegexParser]
+    path: src/semantic/parsers/ml_training.rs
+    
+  BuildParser:
+    type: Component
+    description: Parse build task output
+    layer: semantic
+    status: planned
+    priority: medium
+    depends_on: [RegexParser]
+    path: src/semantic/parsers/build.rs
+    
+  SemanticCommands:
+    type: Component
+    description: Template-based semantic command execution
+    layer: semantic
+    status: planned
+    priority: medium
+    depends_on: [SemanticLayer]
+    path: src/semantic/commands.rs
+    
+  # === UI Layer ===
+  
+  CLI:
+    type: Module
+    description: Command-line interface
+    layer: ui
+    status: planned
+    priority: high
+    depends_on: [Core, SemanticLayer]
+    
+  TUI:
+    type: Component
+    description: Terminal UI using ratatui
+    layer: ui
+    status: planned
+    priority: high
+    depends_on: [CLI]
+    path: src/ui/tui.rs
+    
+  GraphView:
+    type: Component
+    description: Visualize task graph in TUI
+    layer: ui
+    status: planned
+    priority: medium
+    depends_on: [TUI]
+    path: src/ui/views/graph.rs
+    
+  DashboardView:
+    type: Component
+    description: Unified dashboard showing all tasks
+    layer: ui
+    status: planned
+    priority: high
+    depends_on: [TUI]
+    path: src/ui/views/dashboard.rs
+    
+  TerminalView:
+    type: Component
+    description: Focus on single task terminal output
+    layer: ui
+    status: planned
+    priority: high
+    depends_on: [TUI]
+    path: src/ui/views/terminal.rs
+    
+  # === Integration Layer (Future) ===
+  
+  WASMBindings:
+    type: Component
+    description: WASM bindings for web integration
+    layer: bindings
+    status: future
+    priority: low
+    depends_on: [Core]
+    path: src/bindings/wasm/mod.rs
+    
+  FFIBindings:
+    type: Component
+    description: FFI bindings for other languages
+    layer: bindings
+    status: future
+    priority: low
+    depends_on: [Core]
+    path: src/bindings/ffi/mod.rs
+
+# ============================================================
+# TASK GRAPH - Development Tasks
+# ============================================================
+
+tasks:
+  # === Phase 1: Foundation (Week 1-2) ===
+  
+  setup_rust_project:
+    type: Development
+    description: Initialize Rust project with Cargo.toml
+    priority: critical
+    status: pending
+    estimated_hours: 2
+    assignee: tonitangpotato
+    tags: [setup, phase1]
+    
+  implement_graph_parser:
+    type: Development
+    description: Implement .gid/graph.yml parser with serde
+    priority: critical
+    status: pending
+    estimated_hours: 8
+    depends_on: [setup_rust_project]
+    component: GraphParser
+    tags: [core, phase1]
+    
+  implement_pty_manager:
+    type: Development
+    description: Implement PTY creation and I/O handling
+    priority: critical
+    status: pending
+    estimated_hours: 12
+    depends_on: [setup_rust_project]
+    component: PTYManager
+    tags: [core, phase1]
+    
+  implement_scheduler:
+    type: Development
+    description: Implement DAG-based task scheduler
+    priority: critical
+    status: pending
+    estimated_hours: 10
+    depends_on: [implement_graph_parser]
+    component: Scheduler
+    tags: [core, phase1]
+    
+  basic_tui:
+    type: Development
+    description: Basic TUI with task list and status
+    priority: high
+    status: pending
+    estimated_hours: 8
+    depends_on: [implement_scheduler, implement_pty_manager]
+    component: TUI
+    tags: [ui, phase1]
+    
+  # === Phase 2: Semantic Layer (Week 3-4) ===
+  
+  parser_registry:
+    type: Development
+    description: Build parser registry system
+    priority: high
+    status: pending
+    estimated_hours: 6
+    depends_on: [basic_tui]
+    component: ParserRegistry
+    tags: [semantic, phase2]
+    
+  regex_parser:
+    type: Development
+    description: Implement regex-based parser
+    priority: high
+    status: pending
+    estimated_hours: 8
+    depends_on: [parser_registry]
+    component: RegexParser
+    tags: [semantic, phase2]
+    
+  ml_training_parser:
+    type: Development
+    description: Parser for ML training output
+    priority: medium
+    status: pending
+    estimated_hours: 6
+    depends_on: [regex_parser]
+    component: MLTrainingParser
+    tags: [semantic, phase2]
+    
+  semantic_commands:
+    type: Development
+    description: Template-based semantic commands
+    priority: medium
+    status: pending
+    estimated_hours: 8
+    depends_on: [parser_registry]
+    component: SemanticCommands
+    tags: [semantic, phase2]
+    
+  # === Phase 3: Advanced UI (Week 5-6) ===
+  
+  dashboard_view:
+    type: Development
+    description: Unified dashboard with all tasks
+    priority: high
+    status: pending
+    estimated_hours: 10
+    depends_on: [basic_tui, regex_parser]
+    component: DashboardView
+    tags: [ui, phase3]
+    
+  graph_view:
+    type: Development
+    description: Visual task graph view
+    priority: medium
+    status: pending
+    estimated_hours: 12
+    depends_on: [dashboard_view]
+    component: GraphView
+    tags: [ui, phase3]
+    
+  terminal_view:
+    type: Development
+    description: Full terminal view with semantic controls
+    priority: high
+    status: pending
+    estimated_hours: 8
+    depends_on: [semantic_commands]
+    component: TerminalView
+    tags: [ui, phase3]
+    
+  progress_tracking:
+    type: Development
+    description: Real-time progress tracking and ETA
+    priority: high
+    status: pending
+    estimated_hours: 10
+    depends_on: [regex_parser]
+    tags: [features, phase3]
+    
+  # === Documentation & Testing ===
+  
+  write_docs:
+    type: Documentation
+    description: Write comprehensive documentation
+    priority: medium
+    status: pending
+    estimated_hours: 12
+    depends_on: [dashboard_view]
+    tags: [docs, ongoing]
+    
+  write_tests:
+    type: Testing
+    description: Unit and integration tests
+    priority: high
+    status: pending
+    estimated_hours: 20
+    tags: [testing, ongoing]
+    
+  integration_test:
+    type: Testing
+    description: End-to-end integration tests
+    priority: medium
+    status: pending
+    estimated_hours: 8
+    depends_on: [write_tests, terminal_view]
+    tags: [testing, phase3]
+
+# ============================================================
+# MILESTONES
+# ============================================================
+
+milestones:
+  mvp:
+    name: MVP - Core Functionality
+    description: Basic terminal management with simple TUI
+    target_date: 2026-02-14
+    tasks: 
+      - setup_rust_project
+      - implement_graph_parser
+      - implement_pty_manager
+      - implement_scheduler
+      - basic_tui
+      
+  semantic:
+    name: Semantic Layer
+    description: Output parsing and semantic commands
+    target_date: 2026-02-28
+    tasks:
+      - parser_registry
+      - regex_parser
+      - ml_training_parser
+      - semantic_commands
+      
+  v1:
+    name: Version 1.0
+    description: Complete feature set with advanced UI
+    target_date: 2026-03-15
+    tasks:
+      - dashboard_view
+      - graph_view
+      - terminal_view
+      - progress_tracking
+      - write_docs
+      - integration_test

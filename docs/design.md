@@ -1573,16 +1573,327 @@ Semantic = 操作系统提供的抽象
 
 ---
 
+## 🔄 **和 IdeaSpark 的关系** ⭐ NEW
+
+### **定位：GidTerm 是 IdeaSpark 的执行引擎**
+
+```
+IdeaSpark (完整产品)
+├── Idea 管理 (现有)
+├── AI 分类 (现有)
+├── Task Graph (现有)
+└── Terminal 执行层 ← GidTerm
+    ├── PTY 管理
+    ├── 实时监控
+    └── 语义解析
+```
+
+**两种使用场景：**
+
+#### **场景 1: 配合 IdeaSpark**
+```
+用户: IdeaSpark 用户
+流程: IdeaSpark 生成 graph.yml → GidTerm 执行
+```
+
+#### **场景 2: 独立使用**
+```
+用户: 任何开发者（没用 IdeaSpark）
+流程: 手写 config → GidTerm 执行
+```
+
+**开发策略：**
+- ✅ **现在**：独立开发 GidTerm，保持接口清晰
+- ✅ **未来**：作为模块集成进 IdeaSpark
+- ✅ **设计**：核心库 + CLI + 集成层（WASM/FFI）
+
+---
+
+## 📝 **配置文件格式** ⭐ DECIDED
+
+### **支持多种格式（自动识别）**
+
+#### **格式 1: 超简化（快速开始）**
+```yaml
+# 纯命令列表
+tasks:
+  dev: npm run dev
+  test: npm test
+  build: npm run build
+```
+
+#### **格式 2: 标准格式（推荐）**
+```yaml
+# 手写友好，支持依赖和类型
+project: my-project
+
+tasks:
+  build:
+    command: npm run build
+    type: build
+    
+  test:
+    command: npm test
+    depends_on: [build]
+    type: test_suite
+    
+  deploy:
+    command: ./deploy.sh
+    depends_on: [test]
+```
+
+#### **格式 3: IdeaSpark 完整格式（兼容）**
+```yaml
+# 完整兼容 IdeaSpark 的 .gid/graph.yml
+nodes:
+  build:
+    type: Task
+    description: Build the project
+    command: npm run build
+    parser: build_parser
+    status: pending
+    created_at: 2026-01-30
+    semantic_commands:
+      clean: "rm -rf dist/"
+```
+
+**文件名优先级：**
+1. `project.gid.yml` - 手写的标准配置
+2. `.gid/graph.yml` - IdeaSpark 格式
+3. `gidterm.yml` - 备选
+
+---
+
+## 🎯 **技术决策** ⭐ DECIDED
+
+### **核心技术栈：**
+- **语言**: Rust
+  - 性能优秀
+  - 可编译成 WASM（供 IdeaSpark 集成）
+  - 类型安全
+  
+- **配置格式**: YAML
+  - 和 IdeaSpark 一致
+  - 用户友好
+  - 生态成熟（serde_yaml）
+  
+- **TUI 框架**: ratatui + crossterm
+  - 现代化 Rust TUI 框架
+  - 活跃维护
+  
+- **PTY 库**: portable-pty
+  - 跨平台抽象
+  - 可靠成熟
+  
+- **Graph 库**: 自定义实现
+  - 符合特定需求
+  - 与 gid 工具链兼容
+
+### **Parser 策略：分层**
+
+```
+Layer 1: Regex（快速，MVP）
+  ├─ 通用进度条解析
+  ├─ 百分比提取
+  └─ 基础模式匹配
+
+Layer 2: LLM（智能，未来）
+  └─ 复杂/模糊输出理解
+```
+
+---
+
+## 🏗️ **项目架构** ⭐ UPDATED
+
+```
+gidterm/
+├── .gid/                   # Project graph (gid MCP)
+│   └── graph.yml           # Components + Tasks
+├── .mcp.json               # MCP server config
+├── src/
+│   ├── core/               # 核心引擎（可被集成）
+│   │   ├── graph.rs        # Graph 解析
+│   │   ├── pty.rs          # PTY 管理
+│   │   ├── scheduler.rs    # 任务调度
+│   │   └── lib.rs
+│   ├── semantic/           # 语义层
+│   │   ├── registry.rs     # Parser 注册
+│   │   ├── commands.rs     # 语义命令
+│   │   └── parsers/
+│   │       ├── regex.rs
+│   │       ├── ml_training.rs
+│   │       └── build.rs
+│   ├── ui/                 # CLI + TUI
+│   │   ├── cli.rs          # 命令行接口
+│   │   ├── tui.rs          # TUI 框架
+│   │   └── views/
+│   │       ├── dashboard.rs
+│   │       ├── graph.rs
+│   │       └── terminal.rs
+│   ├── bindings/           # 集成层（未来）
+│   │   ├── wasm/           # Web 集成
+│   │   └── ffi/            # 其他语言
+│   └── main.rs
+├── examples/               # 示例配置
+├── docs/
+└── tests/
+```
+
+---
+
+## 📋 **开发路线图** ⭐ UPDATED
+
+### **Phase 1: 核心引擎（Week 1-2）**
+**目标：独立可用的 GidTerm CLI**
+
+- [x] 项目初始化（Cargo + Git）
+- [ ] Graph 解析器（.gid/graph.yml）
+- [ ] PTY 管理器（创建/控制/I/O）
+- [ ] 任务调度器（DAG + 依赖）
+- [ ] 基础 TUI（任务列表 + 状态）
+
+### **Phase 2: 语义层（Week 3-4）**
+**目标：智能理解任务输出**
+
+- [ ] Parser 注册系统
+- [ ] Regex-based parsers
+- [ ] ML training parser
+- [ ] Build task parser
+- [ ] 语义命令模板
+
+### **Phase 3: 高级 UI（Week 5-6）**
+**目标：完整的用户体验**
+
+- [ ] Dashboard 视图（统一仪表盘）
+- [ ] Graph 视图（可视化 DAG）
+- [ ] Terminal 视图（全屏终端 + 控制）
+- [ ] 实时进度追踪
+- [ ] ETA 计算
+
+### **Phase 4: 集成准备（未来）**
+**目标：可被 IdeaSpark 调用**
+
+- [ ] WASM 编译
+- [ ] JSON-RPC API
+- [ ] Event streaming
+- [ ] 文档化接口
+
+---
+
+## 🚀 **快速开始设计** ⭐ NEW
+
+### **三种入口，渐进式复杂度：**
+
+#### **Level 1: 超简单（5 秒）**
+```bash
+# 不需要任何配置
+gidterm run "npm run dev" "npm test"
+```
+
+#### **Level 2: 标准使用（推荐）**
+```bash
+# 1. 初始化
+gidterm init
+
+# 2. 编辑配置
+vim project.gid.yml
+
+# 3. 运行
+gidterm start
+```
+
+#### **Level 3: IdeaSpark 集成**
+```bash
+# 在 IdeaSpark 项目目录
+gidterm start
+
+# 或指定路径
+gidterm start --graph /path/to/.gid/graph.yml
+```
+
+---
+
+## 🔗 **API 设计（供集成）** ⭐ NEW
+
+```rust
+// GidTerm 核心 API（未来供 IdeaSpark 调用）
+pub struct GidTermEngine {
+    graph: TaskGraph,
+    terminals: TerminalManager,
+    parsers: ParserRegistry,
+}
+
+impl GidTermEngine {
+    // 从 graph.yml 初始化
+    pub fn from_graph(path: &Path) -> Result<Self>;
+    
+    // 启动任务
+    pub fn start_task(&mut self, task_id: &str) -> Result<TaskHandle>;
+    
+    // 获取实时状态
+    pub fn get_status(&self, task_id: &str) -> TaskStatus;
+    
+    // 发送命令
+    pub fn send_command(&mut self, task_id: &str, cmd: &str);
+    
+    // 订阅事件
+    pub fn on_progress<F>(&mut self, callback: F);
+}
+```
+
+---
+
+## 📊 **Graph 维护策略** ⭐ NEW
+
+**使用 gid MCP tool 管理两个 graph：**
+
+### **1. Project Graph（架构）**
+```yaml
+# .gid/graph.yml - nodes 部分
+nodes:
+  GraphParser:
+    type: Component
+    layer: core
+    status: in-progress
+    path: src/core/graph.rs
+```
+
+### **2. Task Graph（开发任务）**
+```yaml
+# .gid/graph.yml - tasks 部分
+tasks:
+  implement_graph_parser:
+    type: Development
+    status: in-progress
+    component: GraphParser
+    depends_on: [setup_rust_project]
+```
+
+**更新规则：**
+- 开发时：通过 gid MCP 更新状态
+- 完成组件：node.status → active
+- 完成任务：task.status → done
+- 保持同步：定期 commit graph.yml
+
+---
+
 ## 📋 待研究问题
 
 1. ~~和 Claude Code 的区别？~~ ✅ 已明确
 2. ~~Semantic level 的详细定义和实现~~ ✅ 已展开
-3. 配置文件格式设计（YAML vs TOML vs 自定义 DSL）
-4. Parser 库的选择和实现
-5. MVP 最小功能集确定
-6. 技术栈最终选择（Rust vs Go vs TypeScript）
+3. ~~配置文件格式设计~~ ✅ 已决定（YAML 多格式）
+4. ~~Parser 库的选择和实现~~ ✅ 已决定（分层策略）
+5. ~~MVP 最小功能集确定~~ ✅ 已规划
+6. ~~技术栈最终选择~~ ✅ 已决定（Rust）
+7. ~~和 IdeaSpark 的关系~~ ✅ 已明确（执行引擎）
+
+**剩余问题：**
+- State persistence 策略（SQLite vs JSON）
+- Remote control API 设计
+- Multi-project UI 布局细节
 
 ---
 
-*记录时间：2026-01-30*
-*最后更新：2026-01-30 23:04 EST*
+*记录时间：2026-01-30*  
+*最后更新：2026-01-31 00:47 EST*  
+*开发工具：Claude Code + gid MCP*
