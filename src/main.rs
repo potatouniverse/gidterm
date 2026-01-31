@@ -4,6 +4,7 @@ use anyhow::Result;
 use gidterm::app::App;
 use gidterm::core::Graph;
 use gidterm::ui::{render_live_dashboard, TUI};
+use gidterm::workspace::Workspace;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -17,26 +18,48 @@ async fn main() -> Result<()> {
     // Parse CLI args
     let args: Vec<String> = std::env::args().collect();
     
-    // Load graph
-    let graph = if args.len() > 1 {
-        // Explicit file path provided
-        let graph_path = PathBuf::from(&args[1]);
-        log::info!("Loading graph from: {}", graph_path.display());
-        Graph::from_file(&graph_path)?
-    } else {
-        // Auto-detect
-        log::info!("Auto-detecting graph file...");
-        Graph::auto_load()?
-    };
-
-    log::info!(
-        "Loaded {} nodes, {} tasks",
-        graph.nodes.len(),
-        graph.tasks.len()
-    );
-
+    // Check for workspace mode
+    let workspace_mode = args.iter().any(|arg| arg == "--workspace" || arg == "-w");
+    
     // Create app
-    let mut app = App::new(graph);
+    let mut app = if workspace_mode {
+        // Multi-project workspace mode
+        let root = std::env::current_dir()?;
+        log::info!("🌐 Workspace mode: discovering projects in {}", root.display());
+        
+        let workspace = Workspace::discover(&root)?;
+        log::info!(
+            "Found {} projects with {} total tasks",
+            workspace.project_count(),
+            workspace.total_task_count()
+        );
+        
+        for name in workspace.project_names() {
+            log::info!("  📁 {}", name);
+        }
+        
+        App::from_workspace(&workspace)
+    } else {
+        // Single project mode
+        let graph = if args.len() > 1 && !args[1].starts_with('-') {
+            // Explicit file path provided
+            let graph_path = PathBuf::from(&args[1]);
+            log::info!("Loading graph from: {}", graph_path.display());
+            Graph::from_file(&graph_path)?
+        } else {
+            // Auto-detect
+            log::info!("Auto-detecting graph file...");
+            Graph::auto_load()?
+        };
+
+        log::info!(
+            "Loaded {} nodes, {} tasks",
+            graph.nodes.len(),
+            graph.tasks.len()
+        );
+
+        App::new(graph)
+    };
 
     // Start initial tasks
     app.start_ready_tasks().await?;

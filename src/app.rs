@@ -4,6 +4,7 @@ use crate::core::{Executor, Graph, Scheduler, TaskEvent};
 use crate::session::{Session, TaskStatus};
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
@@ -17,10 +18,12 @@ pub struct App {
     pub selected_task: usize,
     pub last_update: Instant,
     pub session: Session,
+    pub workspace_mode: bool,
+    pub project_names: Vec<String>, // For workspace mode
 }
 
 impl App {
-    /// Create a new app from graph
+    /// Create a new app from graph (single project mode)
     pub fn new(graph: Graph) -> Self {
         let scheduler = Scheduler::new(graph.clone());
         let (executor, event_rx) = Executor::new();
@@ -43,6 +46,32 @@ impl App {
             selected_task: 0,
             last_update: Instant::now(),
             session,
+            workspace_mode: false,
+            project_names: Vec::new(),
+        }
+    }
+
+    /// Create app from workspace (multi-project mode)
+    pub fn from_workspace(workspace: &crate::workspace::Workspace) -> Self {
+        // Create unified graph with namespaced tasks
+        let unified_graph = workspace.to_unified_graph();
+        let scheduler = Scheduler::new(unified_graph);
+        let (executor, event_rx) = Executor::new();
+
+        let session = Session::new("workspace".to_string());
+        let project_names = workspace.project_names();
+
+        Self {
+            scheduler,
+            executor,
+            event_rx,
+            task_outputs: std::collections::HashMap::new(),
+            should_quit: false,
+            selected_task: 0,
+            last_update: Instant::now(),
+            session,
+            workspace_mode: true,
+            project_names,
         }
     }
 
@@ -177,5 +206,37 @@ impl App {
         let mut ids: Vec<String> = self.scheduler.graph().all_tasks().keys().cloned().collect();
         ids.sort();
         ids
+    }
+
+    /// Extract project name from namespaced task ID
+    /// "agentverse:backend-dev" -> "agentverse"
+    pub fn get_project_name(&self, task_id: &str) -> Option<String> {
+        if self.workspace_mode {
+            task_id.split(':').next().map(|s| s.to_string())
+        } else {
+            None
+        }
+    }
+
+    /// Get tasks grouped by project (for workspace mode)
+    pub fn get_tasks_by_project(&self) -> HashMap<String, Vec<String>> {
+        let mut grouped: HashMap<String, Vec<String>> = HashMap::new();
+
+        if self.workspace_mode {
+            for task_id in self.get_task_ids() {
+                if let Some(project) = self.get_project_name(&task_id) {
+                    grouped
+                        .entry(project)
+                        .or_insert_with(Vec::new)
+                        .push(task_id);
+                }
+            }
+        } else {
+            // Single project mode - group everything under one key
+            let project = self.session.project.clone();
+            grouped.insert(project, self.get_task_ids());
+        }
+
+        grouped
     }
 }

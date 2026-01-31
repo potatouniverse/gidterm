@@ -30,7 +30,9 @@ pub fn render_live_dashboard(f: &mut Frame, app: &App) {
 fn render_header(f: &mut Frame, app: &App, area: Rect) {
     let graph = app.scheduler.graph();
     
-    let title = if let Some(metadata) = &graph.metadata {
+    let title = if app.workspace_mode {
+        format!("🌐 Workspace ({} projects) - GidTerm", app.project_names.len())
+    } else if let Some(metadata) = &graph.metadata {
         format!("📊 {} - GidTerm (Live)", metadata.project)
     } else {
         "📊 GidTerm (Live)".to_string()
@@ -59,79 +61,47 @@ fn render_header(f: &mut Frame, app: &App, area: Rect) {
 }
 
 fn render_task_list(f: &mut Frame, app: &App, area: Rect) {
-    let task_ids = app.get_task_ids();
-    
-    let items: Vec<ListItem> = task_ids
-        .iter()
-        .enumerate()
-        .map(|(idx, task_id)| {
-            let task = app.scheduler.graph().get_task(task_id).unwrap();
-            
-            let status_icon = match task.status.as_str() {
-                "done" => "✓",
-                "in-progress" => "⚙",
-                "failed" => "✗",
-                _ => "□",
-            };
+    let mut items: Vec<ListItem> = Vec::new();
+    let mut current_idx = 0;
 
-            let status_color = match task.status.as_str() {
-                "done" => Color::Green,
-                "in-progress" => Color::Yellow,
-                "failed" => Color::Red,
-                _ => Color::Gray,
-            };
-
-            let priority_badge = task.priority.as_ref()
-                .map(|p| match p.as_str() {
-                    "critical" => "🔴",
-                    "high" => "🟡",
-                    "medium" => "🔵",
-                    _ => "⚪",
-                })
-                .unwrap_or("");
-
-            // Show output line count if any
-            let output_count = app.task_outputs.get(task_id)
-                .map(|lines| format!(" ({}L)", lines.len()))
-                .unwrap_or_default();
-
-            let deps_info = if let Some(deps) = &task.depends_on {
-                if deps.is_empty() {
-                    String::new()
-                } else {
-                    format!(" ← {}", deps.join(", "))
-                }
-            } else {
-                String::new()
-            };
-
-            // Highlight selected task
-            let style = if idx == app.selected_task {
-                Style::default().bg(Color::DarkGray)
-            } else {
-                Style::default()
-            };
-
-            let line = Line::from(vec![
-                Span::raw(format!("{} ", status_icon)),
+    if app.workspace_mode {
+        // Group tasks by project
+        let tasks_by_project = app.get_tasks_by_project();
+        
+        for project_name in &app.project_names {
+            // Project header
+            let project_header = Line::from(vec![
                 Span::styled(
-                    task_id.clone(),
+                    format!("📁 {}", project_name),
                     Style::default()
-                        .fg(Color::White)
+                        .fg(Color::Magenta)
                         .add_modifier(Modifier::BOLD)
                 ),
-                Span::raw(format!(" {}", priority_badge)),
-                Span::styled(
-                    format!(" [{}]", task.status),
-                    Style::default().fg(status_color),
-                ),
-                Span::styled(output_count, Style::default().fg(Color::Cyan)),
-                Span::styled(deps_info, Style::default().fg(Color::DarkGray)),
             ]);
+            items.push(ListItem::new(project_header));
+            current_idx += 1;
 
-            ListItem::new(line).style(style)
-        })
-        .collect();
+            // Tasks for this project
+            if let Some(task_ids) = tasks_by_project.get(project_name) {
+                for task_id in task_ids {
+                    let item = render_task_item(app, task_id, current_idx);
+                    items.push(item);
+                    current_idx += 1;
+                }
+            }
+
+            // Empty line between projects
+            items.push(ListItem::new(Line::from("")));
+            current_idx += 1;
+        }
+    } else {
+        // Single project mode - flat list
+        let task_ids = app.get_task_ids();
+        for (idx, task_id) in task_ids.iter().enumerate() {
+            let item = render_task_item(app, task_id, idx);
+            items.push(item);
+        }
+    }
 
     let task_list = List::new(items).block(
         Block::default()
@@ -140,6 +110,71 @@ fn render_task_list(f: &mut Frame, app: &App, area: Rect) {
     );
 
     f.render_widget(task_list, area);
+}
+
+fn render_task_item<'a>(app: &'a App, task_id: &str, idx: usize) -> ListItem<'a> {
+    let task = app.scheduler.graph().get_task(task_id).unwrap();
+    
+    let status_icon = match task.status.as_str() {
+        "done" => "✓",
+        "in-progress" => "⚙",
+        "failed" => "✗",
+        _ => "□",
+    };
+
+    let status_color = match task.status.as_str() {
+        "done" => Color::Green,
+        "in-progress" => Color::Yellow,
+        "failed" => Color::Red,
+        _ => Color::Gray,
+    };
+
+    let priority_badge = task.priority.as_ref()
+        .map(|p| match p.as_str() {
+            "critical" => "🔴",
+            "high" => "🟡",
+            "medium" => "🔵",
+            _ => "⚪",
+        })
+        .unwrap_or("");
+
+    // Show output line count if any
+    let output_count = app.task_outputs.get(task_id)
+        .map(|lines| format!(" ({}L)", lines.len()))
+        .unwrap_or_default();
+
+    // In workspace mode, show only the task name (without project prefix)
+    let display_name = if app.workspace_mode {
+        task_id.split(':').nth(1).unwrap_or(task_id)
+    } else {
+        task_id
+    };
+
+    // Highlight selected task
+    let style = if idx == app.selected_task {
+        Style::default().bg(Color::DarkGray)
+    } else {
+        Style::default()
+    };
+
+    let line = Line::from(vec![
+        Span::raw("  "),  // Indent for project grouping
+        Span::raw(format!("{} ", status_icon)),
+        Span::styled(
+            display_name.to_string(),
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD)
+        ),
+        Span::raw(format!(" {}", priority_badge)),
+        Span::styled(
+            format!(" [{}]", task.status),
+            Style::default().fg(status_color),
+        ),
+        Span::styled(output_count, Style::default().fg(Color::Cyan)),
+    ]);
+
+    ListItem::new(line).style(style)
 }
 
 fn render_task_output(f: &mut Frame, app: &App, area: Rect) {

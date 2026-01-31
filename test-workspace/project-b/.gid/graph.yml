@@ -1,0 +1,27 @@
+metadata:
+  project: "project-b"
+  version: "1.0.0"
+  description: "Frontend UI"
+
+nodes: {}
+
+tasks:
+  install:
+    type: "shell"
+    description: "Install dependencies"
+    command: "echo 'Installing project-b...'; sleep 1"
+    status: "pending"
+  
+  webpack:
+    type: "shell"
+    description: "Run webpack"
+    command: "echo 'Webpack bundling...'; sleep 2; echo 'Bundle ready!'"
+    status: "pending"
+    depends_on: ["install"]
+  
+  dev:
+    type: "shell"
+    description: "Run dev server"
+    command: "echo 'Project-B dev server running on :8080'; while true; do sleep 1; echo 'watching files...'; done"
+    status: "pending"
+    depends_on: ["webpack"]

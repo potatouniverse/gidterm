@@ -1,34 +1,128 @@
 # GidTerm - Graph-Driven Semantic Terminal Controller
 
-A semantic terminal controller that integrates gid's project/task graph with intelligent process management.
+A semantic terminal controller that integrates gid's project/task graphs with intelligent process management and real-time monitoring.
 
-## 🎯 Core Concept
+## 🎯 What It Does
 
-Not just a terminal multiplexer - a complete project orchestration system with:
-- Multi-project management
-- Task dependency graphs (DAG)
-- Semantic understanding of tasks
-- Unified dashboard
-- Intelligent control
+Manage multiple projects with complex task dependencies - all in one unified TUI dashboard.
+
+```
+╔═══════════════════════════════════════════════════╗
+║ 🌐 Workspace (3 projects) - GidTerm               ║
+╠═══════════════════════════════════════════════════╣
+║ 📁 backend                                        ║
+║   ⚙ install [in-progress] 🟢 (12L)              ║
+║   □ build [pending] ⏳                           ║
+║                                                   ║
+║ 📁 frontend                                       ║
+║   ✓ webpack [done] ✅                            ║
+║   ⚙ dev [running] 🟢 (45L)                      ║
+╚═══════════════════════════════════════════════════╝
+```
+
+## ✨ Features
+
+- **🌐 Multi-project workspace** - Manage multiple projects simultaneously
+- **📊 DAG scheduling** - Automatic dependency resolution
+- **⚡ Parallel execution** - Run independent tasks concurrently
+- **🔄 gid integration** - Auto-loads from `.gid/graph.yml`
+- **💾 Session persistence** - Full task history tracking
+- **📺 Live TUI** - Real-time dashboard with task status & output
+
+## 🚀 Quick Start
+
+### Single Project
+```bash
+cd my-project
+gidterm                    # Auto-detects .gid/graph.yml
+```
+
+### Workspace Mode (Multiple Projects)
+```bash
+cd my-monorepo
+gidterm --workspace        # Discovers all projects
+```
 
 ## 📁 Project Structure
 
 ```
-gidterm/
-├── docs/               # Documentation
-│   └── design.md       # Complete design document
-├── src/                # Source code (TBD)
-├── examples/           # Example configurations
-└── README.md           # This file
+my-monorepo/
+├── backend/
+│   └── .gid/
+│       └── graph.yml      # Backend tasks
+├── frontend/
+│   └── .gid/
+│       └── graph.yml      # Frontend tasks
+└── database/
+    └── .gid/
+        └── graph.yml      # Database tasks
 ```
 
-## 🚀 Status
+## 🎯 Status
 
-**Current Phase:** Design & Architecture
+**Current Phase:** ✅ Production Ready!
+
+**What Works:**
+- ✅ Multi-project workspace management
+- ✅ Task dependency resolution (DAG)
+- ✅ Parallel task execution
+- ✅ Real-time TUI dashboard
+- ✅ Session persistence & history
+- ✅ gid project integration
+
+## 📖 Usage
+
+### CLI Commands
+
+```bash
+# Single project mode
+gidterm                     # Auto-detect .gid/graph.yml
+gidterm my-tasks.yml        # Explicit file
+
+# Workspace mode
+gidterm --workspace         # Discover all projects
+gidterm -w                  # Short form
+
+# Help
+gidterm --help
+```
+
+### Keyboard Controls
+
+- `↑`/`↓` - Select task
+- `r` - Refresh / restart ready tasks
+- `q` - Quit
+
+### Task Graph Example
+
+```yaml
+# .gid/graph.yml
+metadata:
+  project: "my-app"
+
+tasks:
+  install:
+    command: "npm install"
+    status: "pending"
+  
+  build:
+    command: "npm run build"
+    depends_on: ["install"]
+    status: "pending"
+  
+  dev:
+    command: "npm run dev"
+    depends_on: ["build"]
+    status: "pending"
+```
 
 ## 📚 Documentation
 
-See [docs/design.md](docs/design.md) for the complete design document.
+- [MULTI-PROJECT.md](MULTI-PROJECT.md) - Multi-project workspace guide
+- [GID-INTEGRATION.md](GID-INTEGRATION.md) - gid integration details
+- [IMPLEMENTATION-SUMMARY.md](IMPLEMENTATION-SUMMARY.md) - Implementation notes
+- [STATUS.md](STATUS.md) - Current development status
+- [docs/design.md](docs/design.md) - Original design document
 
 ## 🛠️ Technology Stack (Proposed)
 

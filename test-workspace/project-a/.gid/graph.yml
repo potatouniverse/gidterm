@@ -1,0 +1,27 @@
+metadata:
+  project: "project-a"
+  version: "1.0.0"
+  description: "Backend API"
+
+nodes: {}
+
+tasks:
+  install:
+    type: "shell"
+    description: "Install dependencies"
+    command: "echo 'Installing project-a...'; sleep 1"
+    status: "pending"
+  
+  build:
+    type: "shell"
+    description: "Build the project"
+    command: "echo 'Building project-a...'; sleep 2; echo 'Build complete!'"
+    status: "pending"
+    depends_on: ["install"]
+  
+  dev:
+    type: "shell"
+    description: "Run dev server"
+    command: "echo 'Project-A dev server running on :3000'; while true; do sleep 1; echo 'tick...'; done"
+    status: "pending"
+    depends_on: ["build"]

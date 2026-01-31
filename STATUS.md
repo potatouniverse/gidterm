@@ -1,6 +1,6 @@
 # GidTerm Development Status
 
-**Last Updated**: 2026-01-31 (Updated after gid integration & session persistence)
+**Last Updated**: 2026-01-31 (Multi-project workspace mode added!)
 
 ---
 
@@ -9,6 +9,7 @@
 ### Core Functionality
 - **Graph Parsing** ✅ - Loads YAML task graphs
 - **gid Integration** ✅ - Auto-detects `.gid/graph.yml` 
+- **Multi-Project Workspace** ✅ - Manage multiple projects simultaneously
 - **Session Persistence** ✅ - Tracks task history in `.gidterm/sessions/`
 - **DAG Scheduling** ✅ - Correctly resolves task dependencies  
 - **Parallel Detection** ✅ - Identifies tasks that can run in parallel
@@ -24,6 +25,13 @@
 ---
 
 ## ✅ Recently Completed
+
+### Multi-Project Workspace Mode (DONE - Today!)
+- **Auto-discovery** ✅ - Finds all projects with `.gid/graph.yml`
+- **Unified management** ✅ - One gidterm manages all projects
+- **Grouped TUI** ✅ - Tasks grouped by project in UI
+- **Namespaced tasks** ✅ - No ID conflicts (e.g., `backend:install`)
+- **Workspace sessions** ✅ - One session tracks everything
 
 ### gid Integration & Session Persistence (DONE)
 - **Auto-load graphs** ✅ - Detects `.gid/graph.yml` or `gidterm.yml`
