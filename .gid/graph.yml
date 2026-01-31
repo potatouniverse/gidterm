@@ -26,7 +26,7 @@ nodes:
     type: Component
     description: Parse .gid/graph.yml and build task DAG
     layer: core
-    status: planned
+    status: active
     priority: critical
     depends_on: [Core]
     path: src/core/graph.rs
@@ -35,7 +35,7 @@ nodes:
     type: Component
     description: PTY creation, I/O handling, signal control
     layer: core
-    status: planned
+    status: active
     priority: critical
     depends_on: [Core]
     path: src/core/pty.rs
@@ -44,7 +44,7 @@ nodes:
     type: Component
     description: Task dependency scheduling and execution
     layer: core
-    status: planned
+    status: active
     priority: critical
     depends_on: [GraphParser]
     path: src/core/scheduler.rs
@@ -118,7 +118,7 @@ nodes:
     type: Component
     description: Terminal UI using ratatui
     layer: ui
-    status: planned
+    status: active
     priority: high
     depends_on: [CLI]
     path: src/ui/tui.rs
@@ -136,7 +136,7 @@ nodes:
     type: Component
     description: Unified dashboard showing all tasks
     layer: ui
-    status: planned
+    status: active
     priority: high
     depends_on: [TUI]
     path: src/ui/views/dashboard.rs
@@ -181,50 +181,55 @@ tasks:
     type: Development
     description: Initialize Rust project with Cargo.toml
     priority: critical
-    status: pending
+    status: done
     estimated_hours: 2
     assignee: tonitangpotato
     tags: [setup, phase1]
+    completed_at: 2026-01-31
     
   implement_graph_parser:
     type: Development
     description: Implement .gid/graph.yml parser with serde
     priority: critical
-    status: pending
+    status: done
     estimated_hours: 8
     depends_on: [setup_rust_project]
     component: GraphParser
     tags: [core, phase1]
+    completed_at: 2026-01-31
     
   implement_pty_manager:
     type: Development
     description: Implement PTY creation and I/O handling
     priority: critical
-    status: pending
+    status: done
     estimated_hours: 12
     depends_on: [setup_rust_project]
     component: PTYManager
     tags: [core, phase1]
+    completed_at: 2026-01-31
     
   implement_scheduler:
     type: Development
     description: Implement DAG-based task scheduler
     priority: critical
-    status: pending
+    status: done
     estimated_hours: 10
     depends_on: [implement_graph_parser]
     component: Scheduler
     tags: [core, phase1]
+    completed_at: 2026-01-31
     
   basic_tui:
     type: Development
     description: Basic TUI with task list and status
     priority: high
-    status: pending
+    status: done
     estimated_hours: 8
     depends_on: [implement_scheduler, implement_pty_manager]
     component: TUI
     tags: [ui, phase1]
+    completed_at: 2026-01-31
     
   # === Phase 2: Semantic Layer (Week 3-4) ===
   
