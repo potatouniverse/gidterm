@@ -3,6 +3,7 @@
 //! A semantic terminal controller that integrates project/task graphs
 //! with intelligent process management.
 
+pub mod agents;
 pub mod ai;
 pub mod app;
 pub mod core;
@@ -14,6 +15,10 @@ pub mod ui;
 pub mod workspace;
 
 // Re-exports
+pub use agents::{
+    AgentDetector, AgentManager, AgentProcess, AgentRuntimeStatus, AgentState, AgentStatusParser,
+    AgentTask, AgentTaskStatus, AgentType,
+};
 pub use app::App;
 pub use core::{Executor, Graph, GraphTaskStatus, PTYHandle, Scheduler, TaskEvent};
 pub use notifications::{NotificationConfig, NotificationEvent, NotificationManager};

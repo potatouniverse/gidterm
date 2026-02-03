@@ -1,5 +1,6 @@
 //! Application state and main event loop
 
+use crate::agents::{AgentManager, AgentRuntimeStatus, AgentType};
 use crate::core::{Executor, Graph, Scheduler, TaskEvent};
 use crate::notifications::NotificationManager;
 use crate::ports::PortManager;
@@ -113,6 +114,9 @@ pub struct App {
     pub search_mode: bool,
     pub recent_events: Vec<(Instant, String, String)>, // (time, project, message)
     pub task_start_times: HashMap<String, Instant>,
+    // Phase 2: Agent Integration
+    pub agent_manager: AgentManager,
+    pub last_agent_scan: Instant,
 }
 
 impl App {
@@ -135,6 +139,10 @@ impl App {
         if let Err(e) = port_manager.allocate(&project_name, None) {
             log::warn!("Failed to allocate port for {}: {}", project_name, e);
         }
+
+        // Initialize agent manager and register project
+        let mut agent_manager = AgentManager::new();
+        agent_manager.register_project(&project_name, AgentType::Generic);
 
         Self {
             scheduler,
@@ -162,6 +170,9 @@ impl App {
             search_mode: false,
             recent_events: Vec::new(),
             task_start_times: HashMap::new(),
+            // Phase 2: Agent Integration
+            agent_manager,
+            last_agent_scan: Instant::now(),
         }
     }
 
@@ -184,6 +195,12 @@ impl App {
             }
         }
 
+        // Initialize agent manager and register all projects
+        let mut agent_manager = AgentManager::new();
+        for name in &project_names {
+            agent_manager.register_project(name, AgentType::Generic);
+        }
+
         Self {
             scheduler,
             executor,
@@ -194,7 +211,7 @@ impl App {
             last_update: Instant::now(),
             session,
             workspace_mode: true,
-            project_names,
+            project_names: project_names.clone(),
             parser_registry,
             task_metrics: HashMap::new(),
             metric_history: HashMap::new(),
@@ -210,6 +227,9 @@ impl App {
             search_mode: false,
             recent_events: Vec::new(),
             task_start_times: HashMap::new(),
+            // Phase 2: Agent Integration
+            agent_manager,
+            last_agent_scan: Instant::now(),
         }
     }
 
@@ -259,6 +279,14 @@ impl App {
     pub fn process_events(&mut self) {
         let mut session_updated = false;
 
+        // Periodically scan for agent processes (every 5 seconds)
+        if self.last_agent_scan.elapsed().as_secs() >= 5 {
+            if let Err(e) = self.agent_manager.scan_processes() {
+                log::debug!("Agent scan error: {}", e);
+            }
+            self.last_agent_scan = Instant::now();
+        }
+
         while let Ok(event) = self.event_rx.try_recv() {
             match event {
                 TaskEvent::Started { task_id } => {
@@ -296,6 +324,10 @@ impl App {
                         
                         // Check for waiting-for-input patterns
                         self.check_waiting_input(&task_id, &line);
+                        
+                        // Update agent status from output
+                        let project = self.get_project_name(&task_id).unwrap_or_else(|| self.session.project.clone());
+                        self.agent_manager.update_output(&project, &line);
                     }
                 }
                 TaskEvent::Completed { task_id, exit_code } => {
@@ -746,15 +778,28 @@ impl App {
                 }
             }
             
-            // Determine agent status
-            let agent_status = if tasks_failed > 0 {
-                AgentStatus::Error
-            } else if tasks_running > 0 {
-                AgentStatus::Running
-            } else if tasks_done == task_count && task_count > 0 {
-                AgentStatus::Completed
-            } else {
-                AgentStatus::Idle
+            // Get agent status from agent manager (Phase 2)
+            let agent_runtime_status = self.agent_manager.get_status(name);
+            
+            // Map AgentRuntimeStatus to AgentStatus for display
+            let agent_status = match agent_runtime_status {
+                AgentRuntimeStatus::Running => AgentStatus::Running,
+                AgentRuntimeStatus::Thinking => AgentStatus::Running, // Show as running
+                AgentRuntimeStatus::WaitingInput => AgentStatus::WaitingInput,
+                AgentRuntimeStatus::Completed => AgentStatus::Completed,
+                AgentRuntimeStatus::Error => AgentStatus::Error,
+                AgentRuntimeStatus::NotRunning => {
+                    // Fall back to task-based status
+                    if tasks_failed > 0 {
+                        AgentStatus::Error
+                    } else if tasks_running > 0 {
+                        AgentStatus::Running
+                    } else if tasks_done == task_count && task_count > 0 {
+                        AgentStatus::Completed
+                    } else {
+                        AgentStatus::Idle
+                    }
+                }
             };
             
             // Get recent event for this project
@@ -802,5 +847,34 @@ impl App {
     /// Get current search query
     pub fn get_search_query(&self) -> &str {
         &self.search_query
+    }
+    
+    // === Phase 2: Agent Integration Methods ===
+    
+    /// Get agent status for a specific project
+    pub fn get_agent_status(&self, project: &str) -> AgentRuntimeStatus {
+        self.agent_manager.get_status(project)
+    }
+    
+    /// Get detailed agent state for a project
+    pub fn get_agent_state(&self, project: &str) -> Option<&crate::agents::AgentState> {
+        self.agent_manager.get_state(project)
+    }
+    
+    /// Register a project for agent tracking with specific type
+    pub fn register_agent(&mut self, project: &str, agent_type: AgentType) {
+        self.agent_manager.register_project(project, agent_type);
+    }
+    
+    /// Force scan for agent processes
+    pub fn scan_agents(&mut self) -> Result<()> {
+        self.agent_manager.scan_processes()?;
+        self.last_agent_scan = Instant::now();
+        Ok(())
+    }
+    
+    /// Get agent runtime status emoji for display
+    pub fn get_agent_emoji(&self, project: &str) -> &'static str {
+        self.agent_manager.get_status(project).emoji()
     }
 }

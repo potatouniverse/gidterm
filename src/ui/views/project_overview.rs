@@ -4,7 +4,12 @@
 //! - Project name, port, agent status
 //! - Task pipeline summary (done/running/pending)
 //! - Recent events
+//!
+//! Phase 2: Agent Integration
+//! - Shows agent status with emoji indicators:
+//!   🤖 running, 💭 thinking, ⏳ waiting, ✅ done, ❌ error
 
+use crate::agents::AgentRuntimeStatus;
 use crate::app::App;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -35,7 +40,22 @@ pub fn render_project_overview(f: &mut Frame, app: &App) {
 fn render_header(f: &mut Frame, app: &App, area: Rect) {
     let summaries = app.get_project_summaries();
     let total_projects = summaries.len();
-    let running = summaries.iter().filter(|s| s.tasks_running > 0).count();
+    
+    // Count agents by status (Phase 2)
+    let mut agents_running = 0;
+    let mut agents_thinking = 0;
+    let mut agents_waiting = 0;
+    
+    for summary in &summaries {
+        let status = app.get_agent_status(&summary.name);
+        match status {
+            AgentRuntimeStatus::Running => agents_running += 1,
+            AgentRuntimeStatus::Thinking => agents_thinking += 1,
+            AgentRuntimeStatus::WaitingInput => agents_waiting += 1,
+            _ => {}
+        }
+    }
+    
     let completed = summaries.iter().filter(|s| s.tasks_done == s.task_count && s.task_count > 0).count();
     let errors = summaries.iter().filter(|s| s.tasks_failed > 0).count();
     
@@ -45,9 +65,19 @@ fn render_header(f: &mut Frame, app: &App, area: Rect) {
         String::new()
     };
     
+    // Build status string with agent indicators
+    let agent_status = if agents_running + agents_thinking + agents_waiting > 0 {
+        format!(
+            " | 🤖{} 💭{} ⏳{}",
+            agents_running, agents_thinking, agents_waiting
+        )
+    } else {
+        String::new()
+    };
+    
     let title = format!(
-        "🌐 gidterm workspace ({} projects) | Running: {} | Done: {} | Errors: {}{}",
-        total_projects, running, completed, errors, search_indicator
+        "🌐 gidterm workspace ({} projects) | ✅{} ❌{}{}{}",
+        total_projects, completed, errors, agent_status, search_indicator
     );
     
     let header = Paragraph::new(title)
@@ -69,9 +99,21 @@ fn render_project_list(f: &mut Frame, app: &App, area: Rect) {
             .map(|p| format!(":{}", p))
             .unwrap_or_else(|| "    ".to_string());
         
-        // Status emoji and color
-        let status_emoji = summary.agent_status.emoji();
-        let status_color = summary.agent_status.color();
+        // Get agent runtime status for more detailed emoji (Phase 2)
+        let agent_runtime = app.get_agent_status(&summary.name);
+        let (status_emoji, status_color, status_text) = match agent_runtime {
+            AgentRuntimeStatus::Running => ("🤖", Color::Green, "running"),
+            AgentRuntimeStatus::Thinking => ("💭", Color::Yellow, "thinking"),
+            AgentRuntimeStatus::WaitingInput => ("⏳", Color::Blue, "waiting"),
+            AgentRuntimeStatus::Completed => ("✅", Color::Gray, "done"),
+            AgentRuntimeStatus::Error => ("❌", Color::Red, "error"),
+            AgentRuntimeStatus::NotRunning => {
+                // Fall back to task-based display
+                let emoji = summary.agent_status.emoji();
+                let color = summary.agent_status.color();
+                (emoji, color, "idle")
+            }
+        };
         
         // Task pipeline: [done] → [running] → [pending]
         let pipeline = format!(
@@ -112,9 +154,13 @@ fn render_project_list(f: &mut Frame, app: &App, area: Rect) {
                 format!("{:<6}", port_str),
                 Style::default().fg(Color::Green),
             ),
-            // Status
+            // Agent Status (Phase 2: detailed status)
             Span::styled(
                 format!("{} ", status_emoji),
+                Style::default().fg(status_color),
+            ),
+            Span::styled(
+                format!("{:<8}", status_text),
                 Style::default().fg(status_color),
             ),
             // Pipeline
@@ -185,9 +231,10 @@ fn render_recent_events(f: &mut Frame, app: &App, area: Rect) {
 
 fn render_footer(f: &mut Frame, app: &App, area: Rect) {
     let help = if app.is_search_mode() {
-        "Type to search │ Enter: Jump │ Esc: Cancel"
+        "Type to search │ Enter: Jump │ Esc: Cancel".to_string()
     } else {
-        "1-9: Quick Switch │ /: Search │ Enter: Focus │ Tab: Cycle Views │ q: Quit"
+        // Include agent status legend (Phase 2)
+        "1-9: Switch │ /: Search │ Enter: Focus │ Tab: Views │ q: Quit │ 🤖running 💭thinking ⏳waiting ✅done ❌error".to_string()
     };
     
     let footer = Paragraph::new(help)

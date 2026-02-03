@@ -1951,10 +1951,12 @@ Chrome Tab Groups:
 - [x] Basic notifications (macOS) — `src/notifications.rs` (NotificationManager, osascript)
 - [x] Quick switch (keyboard shortcuts) — 1-9 keys, `/` search, ←→ navigation
 
-#### Phase 2: Agent Integration (2 weeks)
-- [ ] Agent process detection
-- [ ] Agent status parsing
-- [ ] Agent task definition in graph
+#### Phase 2: Agent Integration ✅ DONE (2026-02-03)
+- [x] Agent process detection — `src/agents.rs` (AgentDetector, process scanning via ps)
+- [x] Agent status parsing — `src/agents.rs` (AgentStatusParser, keyword-based status detection)
+- [x] Agent task definition in graph — `src/agents.rs` (AgentTask struct, agent type + prompt)
+- [x] Dashboard integration — emoji indicators: 🤖 running, 💭 thinking, ⏳ waiting, ✅ done, ❌ error
+- [x] Agent manager — `src/agents.rs` (AgentManager tracks states per project)
 
 #### Phase 3: Browser Integration (2-3 weeks)
 - [ ] Chrome Extension scaffold
@@ -2187,7 +2189,7 @@ tasks:
 
 ---
 
-## 📊 **实现状态** ⭐ v0.4.0
+## 📊 **实现状态** ⭐ v0.5.0
 
 | Layer | Coverage | Status |
 |-------|----------|--------|
@@ -2196,12 +2198,13 @@ tasks:
 | Terminal UI | 98% | ✅ LiveDashboard, TerminalView, GraphView, ComparisonView, **ProjectOverview**, Sparklines, view switching |
 | AI Integration | 90% | ✅ ControlAPI trait, ControlMode (Manual/MCP/Agent), EventStream, ControlCommand/Response |
 | CLI | 95% | ✅ Clap subcommands: run, status, init, history, start, **ports** |
-| Multi-project DX | 95% | ✅ **Phase 1 Done**: UnifiedDashboard, PortManager, NotificationSystem, QuickSwitch |
+| Multi-project DX | 98% | ✅ **Phase 1+2 Done**: UnifiedDashboard, PortManager, NotificationSystem, QuickSwitch, **AgentIntegration** |
+| Agent Integration | 95% | ✅ **Phase 2 Done**: AgentDetector, AgentStatusParser, AgentManager, AgentTask, dashboard emoji |
 | Session | 90% | ✅ SessionManager, task history, output tracking |
-| Tests | 85% | ✅ 59 tests (43 unit + 16 integration), 0 failures |
+| Tests | 90% | ✅ 65 tests (49 unit + 16 integration), 0 failures |
 
-**GID Graph Health Score: 95/100** (graph-indexed-development-mcp)
-**Graph Nodes: 33** (7 Features, 24 Components, 2 Tests)
+**GID Graph Health Score: 97/100** (graph-indexed-development-mcp)
+**Graph Nodes: 38** (8 Features, 27 Components, 2 Tests)
 
 ---
 
