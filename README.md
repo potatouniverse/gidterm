@@ -123,6 +123,7 @@ tasks:
 - [IMPLEMENTATION-SUMMARY.md](IMPLEMENTATION-SUMMARY.md) - Implementation notes
 - [STATUS.md](STATUS.md) - Current development status
 - [docs/design.md](docs/design.md) - Original design document
+- [docs/COMPARISON.md](docs/COMPARISON.md) - How gidterm compares to similar tools
 
 ## 🛠️ Technology Stack (Proposed)
 
